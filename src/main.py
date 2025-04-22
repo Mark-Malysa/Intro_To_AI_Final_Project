@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 # 1. NLTK setup
 nltk.download('stopwords')
 nltk.download('punkt')
+nltk.download('punkt_tab')
 
 # 2. Locate datasets folder
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
