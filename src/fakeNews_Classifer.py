@@ -79,12 +79,14 @@ class TextPreprocessor:
         text = re.sub(r'[^a-zA-Z\s]', '', text)
         
         # Simple word splitting as backup if NLTK tokenization fails
-        try:
-            tokens = word_tokenize(text)
-        except:
-            print("Warning: NLTK tokenization failed, falling back to simple split")
-            tokens = text.split()
+        # try:
+        #     tokens = word_tokenize(text)
+        # except:
+        #     print("Warning: NLTK tokenization failed, falling back to simple split")
+        #     tokens = text.split()
         
+        tokens = text.split()
+
         # Remove stopwords and short words
         tokens = [token for token in tokens 
                  if token not in self.stop_words and len(token) > 2]
