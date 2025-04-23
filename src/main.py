@@ -125,7 +125,6 @@ param_grid = {
     'penalty': ['l2'],
     'solver': ['lbfgs']
 }
-
 grid = GridSearchCV(
     LogisticRegression(max_iter=1000),
     param_grid,
@@ -158,4 +157,5 @@ plt.title("Confusion Matrix (Tuned Model)")
 plt.xlabel("Predicted")
 plt.ylabel("True")
 plt.show()
+
 
