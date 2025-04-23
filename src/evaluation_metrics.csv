@@ -1,0 +1,5 @@
+metric,value
+validation_accuracy,0.9611358574610245
+validation_f1,0.9625897738235609
+validation_precision,0.969134470105763
+validation_recall,0.9561328790459966
