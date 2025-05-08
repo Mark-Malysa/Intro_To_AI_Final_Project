@@ -27,6 +27,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import ssl
 import nltk
+import os
+from datetime import datetime
 
 # Fix SSL certificate issue
 try:
@@ -223,22 +225,59 @@ def get_most_indicative_words(classifier, n=20):
     
     return word_scores
 
-def plot_confusion_matrix(y_true, y_pred):
-    """Plot confusion matrix using seaborn"""
+def setup_visuals_directory():
+    """Create a directory for saving visualizations and results"""
+    # Create base directory
+    base_dir = 'visuals_NB'
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+    
+    # Create timestamped subdirectory for this run
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    run_dir = os.path.join(base_dir, f'run_{timestamp}')
+    os.makedirs(run_dir)
+    
+    return run_dir
+
+def plot_confusion_matrix(y_true, y_pred, save_dir, phase="Validation"):
+    """Plot confusion matrix using seaborn and save it"""
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=['Real', 'Fake'],
                 yticklabels=['Real', 'Fake'])
-    plt.title('Confusion Matrix')
+    plt.title(f'Confusion Matrix - {phase}')
     plt.ylabel('True Label')
     plt.xlabel('Predicted Label')
-    plt.show()
+    
+    # Save the plot
+    plt.savefig(os.path.join(save_dir, f'confusion_matrix_{phase.lower()}.png'))
+    plt.close()
 
-def evaluate_predictions(y_true, y_pred, phase="Validation"):
-    """
-    Evaluate predictions with multiple metrics and print detailed results
-    """
+def plot_confidence_analysis(confidence_scores, predicted_labels, save_dir, title="Confidence Score Distribution"):
+    """Plot confidence score distribution and save it"""
+    plt.figure(figsize=(15, 5))
+    
+    # Plot 1: Overall confidence distribution
+    plt.subplot(1, 2, 1)
+    plt.hist(confidence_scores, bins=50)
+    plt.title('Overall Confidence Distribution')
+    plt.xlabel('Confidence Score')
+    plt.ylabel('Count')
+    
+    # Plot 2: Box plot of confidence by predicted class
+    plt.subplot(1, 2, 2)
+    sns.boxplot(x=predicted_labels, y=confidence_scores)
+    plt.title('Confidence Scores by Predicted Class')
+    plt.xlabel('Predicted Class')
+    plt.ylabel('Confidence Score')
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, 'confidence_analysis.png'))
+    plt.close()
+
+def evaluate_predictions(y_true, y_pred, save_dir, phase="Validation"):
+    """Evaluate predictions and save results"""
     # Convert labels to consistent format
     label_map = {'real': 'real', 'fake': 'fake', 0: 'real', 1: 'fake'}
     y_true = [label_map.get(str(label), label) for label in y_true]
@@ -250,32 +289,51 @@ def evaluate_predictions(y_true, y_pred, phase="Validation"):
     recall = recall_score(y_true, y_pred, pos_label='fake')
     f1 = f1_score(y_true, y_pred, pos_label='fake')
     
-    # Print results
-    print(f"\n{phase} Results:")
+    # Print detailed metrics
+    print(f"\n{phase} Set Metrics:")
     print(f"{'='*50}")
-    print(f"Accuracy:  {accuracy:.4f}")
+    print(f"Accuracy: {accuracy:.4f}")
     print(f"Precision: {precision:.4f}")
-    print(f"Recall:    {recall:.4f}")
-    print(f"F1 Score:  {f1:.4f}")
+    print(f"Recall: {recall:.4f}")
+    print(f"F1 Score: {f1:.4f}")
     
-    # Create and plot confusion matrix
-    cm = confusion_matrix(y_true, y_pred, labels=['real', 'fake'])
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=['Real', 'Fake'],
-                yticklabels=['Real', 'Fake'])
-    plt.title(f'Confusion Matrix - {phase} Set')
-    plt.ylabel('True Label')
-    plt.xlabel('Predicted Label')
-    plt.show()
+    # Calculate and print class-wise metrics
+    print("\nClass-wise Performance:")
+    print(f"{'='*50}")
+    for label in ['real', 'fake']:
+        class_precision = precision_score(y_true, y_pred, pos_label=label)
+        class_recall = recall_score(y_true, y_pred, pos_label=label)
+        class_f1 = f1_score(y_true, y_pred, pos_label=label)
+        print(f"\n{label.upper()} class:")
+        print(f"Precision: {class_precision:.4f}")
+        print(f"Recall: {class_recall:.4f}")
+        print(f"F1 Score: {class_f1:.4f}")
     
-    return {
+    # Print confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    print("\nConfusion Matrix:")
+    print(f"{'='*50}")
+    print("Predicted:")
+    print("          Real    Fake")
+    print(f"Real    {cm[0][0]:6d}  {cm[0][1]:6d}")
+    print(f"Fake    {cm[1][0]:6d}  {cm[1][1]:6d}")
+    
+    # Save metrics to file
+    metrics = {
+        'phase': phase,
         'accuracy': accuracy,
         'precision': precision,
         'recall': recall,
-        'f1': f1,
-        'confusion_matrix': cm
+        'f1_score': f1
     }
+    
+    metrics_df = pd.DataFrame([metrics])
+    metrics_df.to_csv(os.path.join(save_dir, f'metrics_{phase.lower()}.csv'), index=False)
+    
+    # Plot and save confusion matrix
+    plot_confusion_matrix(y_true, y_pred, save_dir, phase)
+    
+    return metrics
 
 def analyze_misclassifications(texts, true_labels, predicted_labels, confidence_scores):
     """
@@ -316,29 +374,6 @@ def analyze_misclassifications(texts, true_labels, predicted_labels, confidence_
             print(f"Text excerpt: {texts[idx][:200]}...")
             print("-" * 50)
 
-def plot_confidence_analysis(confidence_scores, predicted_labels, title="Confidence Score Distribution"):
-    """
-    Plot confidence score distribution and analysis
-    """
-    plt.figure(figsize=(15, 5))
-    
-    # Plot 1: Overall confidence distribution
-    plt.subplot(1, 2, 1)
-    plt.hist(confidence_scores, bins=50)
-    plt.title('Overall Confidence Distribution')
-    plt.xlabel('Confidence Score')
-    plt.ylabel('Count')
-    
-    # Plot 2: Box plot of confidence by predicted class
-    plt.subplot(1, 2, 2)
-    sns.boxplot(x=predicted_labels, y=confidence_scores)
-    plt.title('Confidence Scores by Predicted Class')
-    plt.xlabel('Predicted Class')
-    plt.ylabel('Confidence Score')
-    
-    plt.tight_layout()
-    plt.show()
-
 def calculate_class_wise_metrics(y_true, y_pred):
     """
     Calculate class-wise performance metrics
@@ -366,19 +401,36 @@ def calculate_class_wise_metrics(y_true, y_pred):
             print(f"{metric}: {value:.4f}")
 
 def main():
+    # Create directory for this run
+    save_dir = setup_visuals_directory()
+    
     # Load and preprocess data
     print("Loading and preprocessing data...")
     df = load_data()
     preprocessor = TextPreprocessor()
     df['tokens'] = df['full_text'].apply(preprocessor.preprocess)
     
-    # Split data
-    X_train, X_val, y_train, y_val = train_test_split(
-        df['tokens'], df['label'], 
-        test_size=0.2, 
+    # Split data into train, validation, and test sets
+    # First split: 80% train+val, 20% test
+    X_temp, X_test, y_temp, y_test = train_test_split(
+        df['tokens'], df['label'],
+        test_size=0.2,
         random_state=42,
         stratify=df['label']
     )
+    
+    # Second split: 80% train, 20% validation (of the remaining 80%)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_temp, y_temp,
+        test_size=0.2,
+        random_state=42,
+        stratify=y_temp
+    )
+    
+    print(f"Data split sizes:")
+    print(f"Training set: {len(X_train)} samples")
+    print(f"Validation set: {len(X_val)} samples")
+    print(f"Test set: {len(X_test)} samples")
     
     # Train classifier
     print("Training classifier...")
@@ -386,80 +438,68 @@ def main():
     classifier.train(X_train, y_train)
     
     # Evaluate on validation set
-    print("Evaluating classifier...")
-    y_pred = [classifier.predict(text) for text in X_val]
+    print("Evaluating classifier on validation set...")
+    y_val_pred = [classifier.predict(text) for text in X_val]
+    val_metrics = evaluate_predictions(y_val, y_val_pred, save_dir, "Validation")
     
-    # Evaluate validation set
-    print("\nEvaluating validation set performance...")
-    val_metrics = evaluate_predictions(y_val, y_pred, "Validation")
+    # Evaluate on test set
+    print("Evaluating classifier on test set...")
+    y_test_pred = [classifier.predict(text) for text in X_test]
+    test_metrics = evaluate_predictions(y_test, y_test_pred, save_dir, "Test")
     
-    # Calculate class-wise metrics for validation set
-    calculate_class_wise_metrics(y_val, y_pred)
+    # Get most indicative words
+    print("Analyzing most indicative words...")
+    indicative_words = get_most_indicative_words(classifier)
     
-    # Process test data
-    print("\nProcessing test data...")
+    # Save indicative words
+    for label in ['real', 'fake']:
+        words_df = pd.DataFrame(indicative_words[label], columns=['word', 'score'])
+        words_df.to_csv(os.path.join(save_dir, f'indicative_words_{label}.csv'), index=False)
+    
+    # Process external test data if available
+    print("Processing external test data...")
     test_df = load_test_data(preprocessor)
     
     if test_df is not None:
         # Make predictions
-        print("Making predictions on test data...")
         test_df['predicted_label'] = [classifier.predict(text) for text in test_df['tokens']]
         test_df['prediction_confidence'] = [max(classifier.predict_proba(text).values()) 
                                           for text in test_df['tokens']]
         
-        # If test data has true labels, evaluate performance
-        if 'label' in test_df.columns:
-            print("\nEvaluating test set performance...")
-            test_metrics = evaluate_predictions(test_df['label'], 
-                                             test_df['predicted_label'], 
-                                             "Test")
-            
-            # Analyze misclassifications
-            analyze_misclassifications(test_df['text'], 
-                                    test_df['label'],
-                                    test_df['predicted_label'],
-                                    test_df['prediction_confidence'])
-            
-            # Calculate class-wise metrics for test set
-            calculate_class_wise_metrics(test_df['label'], 
-                                      test_df['predicted_label'])
+        # Save predictions
+        predictions_df = pd.DataFrame({
+            'id': range(len(test_df)) if 'id' not in test_df.columns else test_df['id'],
+            'predicted_label': test_df['predicted_label'],
+            'prediction_confidence': test_df['prediction_confidence']
+        })
+        
+        predictions_df.to_csv(os.path.join(save_dir, 'external_test_predictions.csv'), index=False)
         
         # Plot confidence analysis
         plot_confidence_analysis(test_df['prediction_confidence'],
                                test_df['predicted_label'],
-                               "Test Set Confidence Analysis")
+                               save_dir)
         
-        # Save predictions with additional information
-        predictions_df = pd.DataFrame({
-            'id': range(len(test_df)) if 'id' not in test_df.columns else test_df['id'],
-            'predicted_label': test_df['predicted_label'],
-            'prediction_confidence': test_df['prediction_confidence'],
-            'text_excerpt': test_df['text'].str[:200]  # Save text excerpt for reference
-        })
+        # If external test data has true labels, evaluate performance
+        if 'label' in test_df.columns:
+            external_test_metrics = evaluate_predictions(test_df['label'], 
+                                                      test_df['predicted_label'],
+                                                      save_dir,
+                                                      "External_Test")
         
-        # Add evaluation metrics to the saved file
-        metrics_df = pd.DataFrame({
-            'metric': ['validation_accuracy', 'validation_f1', 'validation_precision', 'validation_recall'],
-            'value': [val_metrics['accuracy'], val_metrics['f1'], 
-                     val_metrics['precision'], val_metrics['recall']]
-        })
+        # Save summary statistics
+        summary_stats = {
+            'total_predictions': len(predictions_df),
+            'avg_confidence': predictions_df['prediction_confidence'].mean(),
+            'median_confidence': predictions_df['prediction_confidence'].median(),
+            'prediction_distribution': predictions_df['predicted_label'].value_counts().to_dict()
+        }
         
-        # Save both predictions and metrics
-        predictions_df.to_csv('predictions.csv', index=False)
-        metrics_df.to_csv('evaluation_metrics.csv', index=False)
+        pd.DataFrame([summary_stats]).to_csv(os.path.join(save_dir, 'summary_stats.csv'), index=False)
         
-        print("\nResults saved to predictions.csv and evaluation_metrics.csv")
-        
-        # Print summary statistics
-        print("\nSummary Statistics:")
-        print(f"{'='*50}")
-        print(f"Total predictions made: {len(predictions_df)}")
-        print(f"Average confidence: {predictions_df['prediction_confidence'].mean():.4f}")
-        print(f"Median confidence: {predictions_df['prediction_confidence'].median():.4f}")
-        print("\nPrediction distribution:")
-        print(predictions_df['predicted_label'].value_counts())
+        print(f"\nAll results and visualizations saved to: {save_dir}")
     else:
-        print("Could not process test data")
+        print("No external test data available")
 
 if __name__ == "__main__":
     main()
