@@ -178,3 +178,124 @@ Fake         1    4695
 
 Processing external test data...
 Test dataset columns: ['Unnamed: 0', 'title', 'text', 'label']
+
+/root
+/content/drive/MyDrive/Colab Notebooks/AI_Project/Intro_To_AI_Final_Project/src
+best_model.pt			 fakeNews_Classifer.py	visuals_BERT
+evaluation_metrics.csv		 main.py		visuals_NB
+fakeNews_Classifer_BertModel.py  predictions.csv
+2025-05-09 00:31:58.593415: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1746750718.626937  136285 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1746750718.637534  136285 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-05-09 00:31:58.672400: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Using device: cuda
+Loading data...
+Data split sizes:
+Training set: 28734 samples
+Validation set: 7184 samples
+Test set: 8980 samples
+Training model...
+Epoch 1/3: 100% 3592/3592 [48:31<00:00,  1.23it/s, loss=0.3133]
+Epoch 1:
+Average training loss: 0.3190
+Average validation loss: 0.3145
+Epoch 2/3: 100% 3592/3592 [48:28<00:00,  1.24it/s, loss=0.3133]
+Epoch 2:
+Average training loss: 0.3156
+Average validation loss: 0.3144
+Epoch 3/3: 100% 3592/3592 [48:24<00:00,  1.24it/s, loss=0.3133]
+Epoch 3:
+Average training loss: 0.3169
+Average validation loss: 0.3152
+
+Evaluating on validation set...
+
+Validation Set Metrics:
+==================================================
+Accuracy: 0.9981
+Precision: 0.9976
+Recall: 0.9987
+F1 Score: 0.9981
+
+Class-wise Performance:
+==================================================
+
+Real class:
+Precision: 0.9985
+Recall: 0.9974
+F1 Score: 0.9980
+
+Fake class:
+Precision: 0.9976
+Recall: 0.9987
+F1 Score: 0.9981
+
+Confusion Matrix:
+==================================================
+Predicted:
+          Real    Fake
+Real      3418       9
+Fake         5    3752
+
+Evaluating on test set...
+
+Test Set Metrics:
+==================================================
+Accuracy: 0.9982
+Precision: 0.9979
+Recall: 0.9987
+F1 Score: 0.9983
+
+Class-wise Performance:
+==================================================
+
+Real class:
+Precision: 0.9986
+Recall: 0.9977
+F1 Score: 0.9981
+
+Fake class:
+Precision: 0.9979
+Recall: 0.9987
+F1 Score: 0.9983
+
+Confusion Matrix:
+==================================================
+Predicted:
+          Real    Fake
+Real      4274      10
+Fake         6    4690
+
+Processing external test data...
+Test dataset columns: ['Unnamed: 0', 'title', 'text', 'label']
+
+External_Test Set Metrics:
+==================================================
+Accuracy: 0.8080
+Precision: 0.7304
+Recall: 0.9934
+F1 Score: 0.8418
+
+Class-wise Performance:
+==================================================
+
+Real class:
+Precision: 0.9887
+Recall: 0.6115
+F1 Score: 0.7556
+
+Fake class:
+Precision: 0.7304
+Recall: 0.9934
+F1 Score: 0.8418
+
+Confusion Matrix:
+==================================================
+Predicted:
+          Real    Fake
+Real     21419   13609
+Fake       244   36862
+
+All results and visualizations saved to: visuals_BERT/run_20250509_003202
