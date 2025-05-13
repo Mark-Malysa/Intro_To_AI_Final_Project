@@ -1,0 +1,2 @@
+total_predictions,avg_confidence,median_confidence,prediction_distribution
+72134,0.7310509,0.7310581207275391,"{'fake': 50471, 'real': 21663}"
