@@ -76,14 +76,13 @@ class BertNewsClassifier(nn.Module):
         
         # Classifier layers
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(768, 2)  # 768 is BERT's hidden size
+        self.linear = nn.Linear(768, 2)
         self.softmax = nn.Softmax(dim=1)
     
     def forward(self, input_ids, attention_mask):
         # Get BERT outputs
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         
-        # Use the [CLS] token representation for classification
         pooled_output = outputs.pooler_output
         
         # Apply dropout and classification layers
